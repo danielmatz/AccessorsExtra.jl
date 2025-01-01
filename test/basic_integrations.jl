@@ -78,7 +78,7 @@ end
     @testset for tblfunc in [rowtable, columntable, Tables.dictrowtable, Tables.dictcolumntable, StructArray, Table]
         tbl = tblfunc(tblbase)
         test_getset_laws(columntable, tbl, (c=[1.0], d=["2"]), (a=[1], b=[2]); cmp)
-        test_getset_laws((@o columntable(_).a), tbl, [1.0], [2]; cmp)
+        test_getset_laws((@o columntable(_).a), tbl, [1.0, 2.0], [2, 3]; cmp)
         test_getset_laws((@o rowtable(_)[1]), tbl, (a=3, b="x"), (a=2, b="3"); cmp)
         # test_insertdelete_laws((@o columntable(_).c), tbl, [1.0, 2.0])
     end
