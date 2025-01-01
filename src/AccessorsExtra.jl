@@ -97,6 +97,9 @@ struct ⩔{F,G}
 end
 (c::⩔)(x) = c.f(x) || c.g(x)
 
+Base.show(io::IO, f::⩓) = print(io, f.f, " ⩓ ", f.g)
+Base.show(io::IO, f::⩔) = print(io, f.f, " ⩔ ", f.g)
+
 
 # unambiguous for unitranges, but tension with general array @set first(x)...
 # piracy

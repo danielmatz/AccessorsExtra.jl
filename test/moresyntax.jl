@@ -59,6 +59,8 @@ end
     @test sprint(show, @o(tuple(_, 1, 2))) == "(@optic tuple(_, 1, 2))"
     @test sprint(show, @o(sort(_, by=abs))) == "(@optic sort(_, by=abs))"
     @test sprint(show, @o(sort(_, 1, by=abs))) == "(@optic sort(_, 1, by=abs))"
+    @test sprint(show, first ⩔ last) == "first ⩔ last"
+    @test sprint(show, (@o _.a) ⩓ (@o last(_.b) > 1)) == "(@optic _.a) ⩓ (@optic >(last(_.b), 1))"
     @test sprint(show, @o(_ |> keyed(∗))) == "keyed((@optic _[∗]))"
     @test sprint(show, @o(_.a |> enumerated(∗ₚ))) == "(@optic _.a |> enumerated((@optic _[∗ₚ])))"
     @test sprint(show, @o(_.a[∗ₚ] |> selfcontext() |> _.b)) == "(ᵢ(@optic _.b))ᵢ ∘ (@optic _.a[∗ₚ] |> selfcontext(identity))"
