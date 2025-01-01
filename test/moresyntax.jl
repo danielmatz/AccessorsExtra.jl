@@ -16,6 +16,8 @@
 end
 
 @testitem "fixargs" begin
+    using AccessorsExtra.Accessors: test_getset_laws
+
     AccessorsExtra.@allinferred o begin
     o = @o tuple(_)
     @test o(0) === (0,)
@@ -35,6 +37,14 @@ end
     @test o([-3, 1, 2, 0]) == [-3, 0, 1, 2]
     o = @o sort(_, by=abs)
     @test o([-3, 1, 2, 0]) == [0, 1, 2, -3]
+
+    o = @o sort.(_, by=abs)
+    @test o([[-3, 1], [2, 0]]) == [[1, -3], [0, 2]]
+    @test set([[-3, 1], [2, 0]], o, [[1, 2], [3, -4]]) == [[2, 1], [-4, 3]]
+
+    o = @o atan.(_...)
+    @test o(((1, 2), (3, 4))) == (atan(1, 2), atan(3, 4))
+    test_getset_laws(o, [[1, 2], [3, 4]], [0.3, 0.4], [0.1, 0.2]; cmp=(≈))
     end
 
     @test_broken @eval (@o sort(_; by=identity))([-3, 1, 2, 0]) == [-3, 0, 1, 2]

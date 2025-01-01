@@ -114,30 +114,34 @@ function parse_obj_optics(ex::Expr)
         ))
         obj, frontoptic = parse_obj_optics(front)
         optic = :($PropertyLens{$(QuoteNode(property))}())
-    elseif @capture(ex, f_(args__))
-        @debug "Captured f_(args__)" f args
+    elseif @capture(ex, f_(args__)) || @capture(ex, f_.(args__))
+        is_bcast = @capture(ex, tmpf_.(tmpargs__))
+        @debug "Captured f_(args__)" f args is_bcast
+
         args_contain_under = map(arg -> tree_contains(arg, :_), args)
         f_contains_under = tree_contains(f, :_)
         f_contains_under && any(args_contain_under) && error("Either the function or the arguments can contain an underscore, not both")
         if f_contains_under
+            @assert !is_bcast
             obj, frontoptic = parse_obj_optics(f)
             optic = :($funcvallens($(esc.(args)...),))
         elseif length(args) == 1
             arg = only(args)
+            f = _esc_and_dot_name_to_broadcasted(f)
             if Base.isexpr(arg, :(...))
                 obj, frontoptic = parse_obj_optics(only(arg.args))
-                optic = :(splat($(esc(f))))
+                optic = :(splat($f))
             else
                 # regular function optic
                 # broadcasted operators like .- also fall here
                 obj, frontoptic = parse_obj_optics(arg)
-                optic = _esc_and_dot_name_to_broadcasted(f)
+                optic = f
             end
         elseif any(args_contain_under)
+            f = _esc_and_dot_name_to_broadcasted(f)
             if count(args_contain_under) == 1
                 # single function argument is optic target - create Fix1, Fix2, or FixArgs optic
                 # multi-arg broadcasts also fall here, no matter if regular function or operator
-                f = _esc_and_dot_name_to_broadcasted(f)
                 if length(args) == 2 && !any(a -> Base.isexpr(a, :kw) || Base.isexpr(a, :parameters), args)
                     # Base.Fix1 or Fix2 is enough
                     if args_contain_under[1]
@@ -160,15 +164,13 @@ function parse_obj_optics(ex::Expr)
         else
             # do nothing, see extra processing below
         end
-    elseif @capture(ex, f_.(front_))
-        @debug "Captured f_.(front_)" f front
-        # broadcasted function call (not operator)
-        obj, frontoptic = parse_obj_optics(front)
-        optic = :(Base.BroadcastFunction($(esc(f))))
+        if (@isdefined optic) && is_bcast
+            optic = :(Base.BroadcastFunction($optic))
+        end
     end
 
     if !@isdefined optic
-        @debug "No full optic captured, going with PropertyFunction"
+        @debug "No full optic parsed, will create PropertyFunction"
         if tree_contains(ex, :_)
             # placeholder in ex, but doesn't match any of the known forms
             # try creating a propertyfunction if possible

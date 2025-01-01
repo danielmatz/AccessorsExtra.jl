@@ -50,6 +50,9 @@
     o = @o _.a + _[2] + 1
     @test propspec(o) == P()
     @test o((a=10, b=100)) == 111
+
+    o = @o _.a .+ _.b
+    @test o((a=[1,2], b=[3,4])) == [4, 6]
 end
 
 @testitem "maybe" begin
