@@ -17,6 +17,20 @@ function foldtree_pre(op, init, ex::Expr)
     return foldl((acc, x) -> foldtree_pre(op, acc, x), ex.args; init=curval)
 end
 
+# todo: remove this when Accessors is released
+_secondarg(_, x) = x
+_esc_and_dot_name_to_broadcasted(f) = esc(f)
+_esc_and_dot_name_to_broadcasted(f::Symbol) =
+    if f == :.
+    # eg, in @set a[:] .= 1
+        # the returned function will be called as func(a, 1)
+        :(Base.BroadcastFunction($_secondarg))
+    elseif startswith(string(f), '.')
+        # eg, in @set a[:] .+= 1 or @optic _ .+ 1
+        :(Base.BroadcastFunction($(esc(Symbol(string(f)[2:end])))))
+    else
+        esc(f)
+    end
 
 # changes from upstream:
 # https://github.com/JuliaObjects/Accessors.jl/pull/103
@@ -24,6 +38,7 @@ end
 # - FixArgs
 # – PropertyFunction
 # - splat
+# - ⩓, ⩔, _ < _ < _ support
 function parse_obj_optics(ex::Expr)
     dollar_exprs = foldtree([], ex) do exs, x
         x isa Expr && x.head == :$ ?
@@ -106,27 +121,30 @@ function parse_obj_optics(ex::Expr)
                 optic = :(splat($(esc(f))))
             else
                 # regular function optic
+                # broadcasted operators like .- also fall here
                 obj, frontoptic = parse_obj_optics(arg)
-                optic = esc(f)
+                optic = _esc_and_dot_name_to_broadcasted(f)
             end
         elseif any(args_contain_under)
             if count(args_contain_under) == 1
                 # single function argument is optic target - create Fix1, Fix2, or FixArgs optic
+                # multi-arg broadcasts also fall here, no matter if regular function or operator
+                f = _esc_and_dot_name_to_broadcasted(f)
                 if length(args) == 2 && !any(a -> Base.isexpr(a, :kw) || Base.isexpr(a, :parameters), args)
                     # Base.Fix1 or Fix2 is enough
                     if args_contain_under[1]
                         obj, frontoptic = parse_obj_optics(args[1])
-                        optic = :(Base.Fix2($(esc(f)), $(esc(args[2]))))
+                        optic = :(Base.Fix2($f, $(esc(args[2]))))
                     elseif args_contain_under[2]
                         obj, frontoptic = parse_obj_optics(args[2])
-                        optic = :(Base.Fix1($(esc(f)), $(esc(args[1]))))
+                        optic = :(Base.Fix1($f, $(esc(args[1]))))
                     end
                 else
                     # need FixArgs
                     i_under = findfirst(args_contain_under)
                     obj, frontoptic = parse_obj_optics(args[i_under])
                     @reset args[i_under] = Placeholder()
-                    optic = Expr(:call, fixargs, esc(f), esc.(args)...)
+                    optic = Expr(:call, fixargs, f, esc.(args)...)
                 end
             else
                 # multiple function arguments are "targets" - do nothing here, will create propertyfunction below
