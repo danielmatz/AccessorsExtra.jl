@@ -123,7 +123,7 @@ macro construct(exprs...)
     end
     ov_pairs = map(args) do arg
         @assert MacroTools.@capture arg (optic_ = value_)
-        :($Accessors.@optic($optic) => $value)
+        :($Accessors.@o($optic) => $value)
     end
     return :(
         $construct($(T), $(ov_pairs...))

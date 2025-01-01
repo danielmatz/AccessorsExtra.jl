@@ -120,8 +120,8 @@ hasoptic(obj, o::IndexLens) = haskey(obj, only(o.indices))
 
 hasoptic(obj, ::PropertyLens{P}) where {P} = hasproperty(obj, P)
 
-hasoptic(obj, ::typeof(first)) = hasoptic(obj, @optic _[firstindex(obj)])
-hasoptic(obj, ::typeof(last)) = hasoptic(obj, @optic _[lastindex(obj)])
+hasoptic(obj, ::typeof(first)) = hasoptic(obj, @o _[firstindex(obj)])
+hasoptic(obj, ::typeof(last)) = hasoptic(obj, @o _[lastindex(obj)])
 hasoptic(obj, ::typeof(only)) = length(obj) == 1
 
 # should override call, set, modify for efficiency?
@@ -142,10 +142,10 @@ end
 
 macro osomething(args...)
     return :($osomething($(map(args) do arg
-        :($Accessors.@optic $arg)
+        :($Accessors.@o $arg)
     end...))) |> esc
 end
 
 macro maybe(o, default=nothing)
-    return :($maybe(($Accessors.@optic $o); default=$default)) |> esc
+    return :($maybe(($Accessors.@o $o); default=$default)) |> esc
 end

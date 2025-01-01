@@ -26,7 +26,7 @@ _esc_and_dot_name_to_broadcasted(f::Symbol) =
         # the returned function will be called as func(a, 1)
         :(Base.BroadcastFunction($_secondarg))
     elseif startswith(string(f), '.')
-        # eg, in @set a[:] .+= 1 or @optic _ .+ 1
+        # eg, in @set a[:] .+= 1 or @o _ .+ 1
         :(Base.BroadcastFunction($(esc(Symbol(string(f)[2:end])))))
     else
         esc(f)

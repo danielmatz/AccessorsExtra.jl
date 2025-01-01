@@ -30,7 +30,7 @@ OpticStyle(::Type{<:ConcatOptics}) = ModifyBased()
 
 macro optics(exs...)
     optic_exs = map(exs) do ex
-        :($Accessors.@optic($ex))
+        :($Accessors.@o $ex)
     end
     :( $concat($(optic_exs...)) ) |> esc
 end
@@ -140,7 +140,7 @@ function process_optic₊(ex)
         end
         :( $ContainerOptic($oex) )
     else
-        :( $Accessors.@optic $ex )
+        :( $Accessors.@o $ex )
     end
 end
 
