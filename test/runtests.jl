@@ -291,6 +291,11 @@ end
     # @test_throws Exception modify(x -> nothing, (;), o)
     end
 
+    @test maybe(first)((i for i in 1:3)) == 1
+    @test maybe(first)((i for i in 1:0)) == nothing
+    @test maybe(last)((i for i in 1:3)) == 3
+    @test maybe(last)((i for i in 1:0)) == nothing
+
     f = x -> 2*x
     @test (@maybe _.a) === maybe(@o _.a)
     @test (@maybe _.a[∗][2]) === maybe(@o _.a[∗][2])

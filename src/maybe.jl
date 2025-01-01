@@ -120,8 +120,8 @@ hasoptic(obj, o::IndexLens) = haskey(obj, only(o.indices))
 
 hasoptic(obj, ::PropertyLens{P}) where {P} = hasproperty(obj, P)
 
-hasoptic(obj, ::typeof(first)) = hasoptic(obj, @o _[firstindex(obj)])
-hasoptic(obj, ::typeof(last)) = hasoptic(obj, @o _[lastindex(obj)])
+hasoptic(obj, ::typeof(first)) = !isempty(obj)
+hasoptic(obj, ::typeof(last)) = !isempty(obj)
 hasoptic(obj, ::typeof(only)) = length(obj) == 1
 
 # should override call, set, modify for efficiency?
