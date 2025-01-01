@@ -44,6 +44,9 @@ include("construct.jl")
 include("bystep.jl")
 include("testing.jl")
 
+include("../ext/LinearAlgebraExt.jl")
+include("../ext/TestExt.jl")
+
 
 barebones_string(optic) = @p let
     sprint(show, optic; context=:compact => true)
