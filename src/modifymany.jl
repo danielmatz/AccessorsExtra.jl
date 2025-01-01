@@ -1,5 +1,5 @@
 @inline modify(f, A::Tuple, ::Elements, Bs::Tuple...) = map(f, A, Bs...)
-@inline modify(f, A::NTuple{N,Any}, ::Elements, Bs::Vararg{Union{Tuple,Vector,NamedTuple}}) where {N} = ntuple(i -> f(A[i], map(B -> B[i], Bs)...), Val(N))
+@inline modify(f, A::NTuple{N,Any}, ::Elements, Bs::Vararg{Union{Tuple,AbstractVector,NamedTuple,CartesianIndex}}) where {N} = ntuple(i -> f(A[i], map(B -> B[i], Bs)...), Val(N))
 @inline modify(f, A::NamedTuple, ::Elements, Bs...) = @modify(t -> modify(f, t, ∗, Bs...), Tuple(A))
 @inline modify(f, A::Vector, ::Elements, Bs...) = map(f, A, Bs...)
 

@@ -35,6 +35,7 @@ end
     @test modify(+, (1, 2.), ∗, (3, 4)) === (4, 6.)
     @test modify(+, (1, 2.), ∗, (a=3, b=4.)) === (4, 6.)
     @test modify(+, (1, 2.), ∗, [3, 4, 5]) === (4, 6.)
+    @test modify(+, (1, 2.), ∗, CartesianIndex(3, 4)) === (4, 6.)
     @test modify(+, (x=1, y=2.), ∗, (3, 4.)) === (x=4, y=6.)
     @test modify(+, (x=1, y=2.), ∗, (a=3, b=4.)) === (x=4, y=6.)
     @test modify(+, (x=1, y=2.), ∗, [3, 4]) === (x=4, y=6.)
