@@ -167,6 +167,9 @@ function parse_obj_optics(ex::Expr)
         if (@isdefined optic) && is_bcast
             optic = :(Base.BroadcastFunction($optic))
         end
+    elseif Base.isexpr(ex, :macrocall)
+        @debug "Captured macrocall" ex
+        return esc(ex), ()
     end
 
     if !@isdefined optic
