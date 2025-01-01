@@ -160,6 +160,11 @@ function parse_obj_optics(ex::Expr)
         else
             # do nothing, see extra processing below
         end
+    elseif @capture(ex, f_.(front_))
+        @debug "Captured f_.(front_)" f front
+        # broadcasted function call (not operator)
+        obj, frontoptic = parse_obj_optics(front)
+        optic = :(Base.BroadcastFunction($(esc(f))))
     end
 
     if !@isdefined optic
