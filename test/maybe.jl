@@ -150,15 +150,16 @@ end
 end
 
 @testitem "oget" begin
-    AccessorsExtra.@allinferred oget
+    AccessorsExtra.@allinferred oget begin
         o = @o _.a[2]
         @test oget((a=[1, 2, 3],), o, 123) == 2
         @test oget((;), o, 123) == 123
-        @test oget((a=[1, 2, 3],), o) == 2
         @test oget((;), o) == nothing
         @test oget(Returns(123), (a=[1, 2, 3],), o) == 2
         @test oget(Returns(123), (;), o) == 123
     end
+    @test oget((a=[1, 2, 3],), o) == 2
+    @test oget((a=[1],), o) == nothing
 end
 
 @testitem "@oget" begin
