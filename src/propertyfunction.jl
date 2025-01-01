@@ -1,9 +1,10 @@
 struct PropertyFunction{PNT, F}
     props_nt::PNT
     func::F
+    expr::Union{Expr,Nothing}
 end
 
-Base.show(io::IO, pf::PropertyFunction) = print(io, "PropertyFunction(", pf.props_nt, ", ", pf.func, ")")
+Base.show(io::IO, pf::PropertyFunction) = get(io, :compact, false) ? print(io, pf.expr) : print(io, "(@o ", pf.expr, ")")
 Base.show(io::IO, ::MIME"text/plain", pf::PropertyFunction) = show(io, pf)
 
 (pf::PropertyFunction{props})(obj) where {props} = pf.func(obj)
@@ -14,7 +15,7 @@ function hasoptic(obj, pf::PropertyFunction)
     return all(!isnothing, getall(obj, optics))
 end
 
-Base.:(!)(pf::PropertyFunction) = PropertyFunction(pf.props_nt, !pf.func)
+Base.:(!)(pf::PropertyFunction) = PropertyFunction(pf.props_nt, !pf.func, :(!$(pf.expr)))
 
 const PROPFUNCTYPES_ONLYEXTRA = Union{
     PropertyFunction,

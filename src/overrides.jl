@@ -205,7 +205,7 @@ function parse_obj_optics(ex::Expr)
             optic = if props_nt == Placeholder()
                 funcbody
             else
-                :($PropertyFunction($props_nt, $funcbody))
+                :($PropertyFunction($props_nt, $funcbody, $(QuoteNode(ex))))
             end
         else
             # no placeholder in ex
