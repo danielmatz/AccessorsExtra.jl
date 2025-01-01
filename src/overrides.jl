@@ -35,11 +35,14 @@ _esc_and_dot_name_to_broadcasted(f::Symbol) =
 # changes from upstream:
 # https://github.com/JuliaObjects/Accessors.jl/pull/103
 # creating:
+# - ConcatOptic
+# - ContainerOptic
 # - FixArgs
 # – PropertyFunction
 # - splat
 # - ⩓, ⩔, _ < _ < _ support
-function parse_obj_optics(ex::Expr)
+_parse_obj_optics(ex) = parse_obj_optics(ex)
+function _parse_obj_optics(ex::Expr)
     @debug "Parsing optic" ex
     dollar_exprs = foldtree([], ex) do exs, x
         x isa Expr && x.head == :$ ?
@@ -52,16 +55,16 @@ function parse_obj_optics(ex::Expr)
         # obj is the only dollar-expression:
         obj = esc(only(dollar_exprs))
         # parse expr with an underscore instead of the dollar-expression:
-        _, optics = parse_obj_optics(postwalk(x -> x isa Expr && x.head == :$ ? :_ : x, ex))
+        _, optics = _parse_obj_optics(postwalk(x -> x isa Expr && x.head == :$ ? :_ : x, ex))
         return obj, optics
     end
 
     if @capture(ex, (front_ |> back_))
         @debug "Captured front_ |> back_" front back
-        obj, frontoptic = parse_obj_optics(front)
+        obj, frontoptic = _parse_obj_optics(front)
         backoptic = try
             # allow e.g. obj |> first |> _.a.b
-            obj_back, backoptic = parse_obj_optics(back)
+            obj_back, backoptic = _parse_obj_optics(back)
             if obj_back == esc(:_)
                 backoptic
             else
@@ -91,10 +94,10 @@ function parse_obj_optics(ex::Expr)
         if !tree_contains(front, :_) && any(ind -> tree_contains(ind, :_), indices)
             ind = only(indices)
             @assert tree_contains(ind, :_)
-            obj, frontoptic = parse_obj_optics(ind)
+            obj, frontoptic = _parse_obj_optics(ind)
             optic = :(Base.Fix1(getindex, $(esc(front))))
         else
-            obj, frontoptic = parse_obj_optics(front)
+            obj, frontoptic = _parse_obj_optics(front)
             if any(need_dynamic_optic, indices)
                 @gensym collection
                 indices = replace_underscore.(indices, collection)
@@ -112,7 +115,7 @@ function parse_obj_optics(ex::Expr)
             string("Error while parsing :($ex). Second argument to `getproperty` can only be",
                    "an `Int`, `Symbol` or `String` literal, received `$property` instead.")
         ))
-        obj, frontoptic = parse_obj_optics(front)
+        obj, frontoptic = _parse_obj_optics(front)
         optic = :($PropertyLens{$(QuoteNode(property))}())
     elseif @capture(ex, f_(args__)) || @capture(ex, f_.(args__))
         is_bcast = @capture(ex, tmpf_.(tmpargs__))
@@ -123,18 +126,18 @@ function parse_obj_optics(ex::Expr)
         f_contains_under && any(args_contain_under) && error("Either the function or the arguments can contain an underscore, not both")
         if f_contains_under
             @assert !is_bcast
-            obj, frontoptic = parse_obj_optics(f)
+            obj, frontoptic = _parse_obj_optics(f)
             optic = :($funcvallens($(esc.(args)...),))
         elseif length(args) == 1
             arg = only(args)
             f = _esc_and_dot_name_to_broadcasted(f)
             if Base.isexpr(arg, :(...))
-                obj, frontoptic = parse_obj_optics(only(arg.args))
+                obj, frontoptic = _parse_obj_optics(only(arg.args))
                 optic = :(splat($f))
             else
                 # regular function optic
                 # broadcasted operators like .- also fall here
-                obj, frontoptic = parse_obj_optics(arg)
+                obj, frontoptic = _parse_obj_optics(arg)
                 optic = f
             end
         elseif any(args_contain_under)
@@ -145,16 +148,16 @@ function parse_obj_optics(ex::Expr)
                 if length(args) == 2 && !any(a -> Base.isexpr(a, :kw) || Base.isexpr(a, :parameters), args)
                     # Base.Fix1 or Fix2 is enough
                     if args_contain_under[1]
-                        obj, frontoptic = parse_obj_optics(args[1])
+                        obj, frontoptic = _parse_obj_optics(args[1])
                         optic = :(Base.Fix2($f, $(esc(args[2]))))
                     elseif args_contain_under[2]
-                        obj, frontoptic = parse_obj_optics(args[2])
+                        obj, frontoptic = _parse_obj_optics(args[2])
                         optic = :(Base.Fix1($f, $(esc(args[1]))))
                     end
                 else
                     # need FixArgs
                     i_under = findfirst(args_contain_under)
-                    obj, frontoptic = parse_obj_optics(args[i_under])
+                    obj, frontoptic = _parse_obj_optics(args[i_under])
                     @reset args[i_under] = Placeholder()
                     optic = Expr(:call, fixargs, f, esc.(args)...)
                 end
@@ -218,6 +221,44 @@ function parse_obj_optics(ex::Expr)
     end
 
     return (obj, tuple(frontoptic..., optic))
+end
+
+function parse_obj_optics(ex::Expr)
+    @debug "Parsing optic - outer" ex
+    if Base.isexpr(ex, :tuple) || Base.isexpr(ex, :vect)
+        @debug "Captured tuple or vect"
+        if length(ex.args) == 1 && Base.isexpr(only(ex.args), :parameters)
+            @debug "... with kwargs-like parameters"
+            oex = @modify(only(ex.args).args[∗]) do arg
+                @debug "Individual argument" arg
+                if MacroTools.@capture arg (key_ = optic_)
+                    :( $key = $Accessors.@o $optic )
+                else
+                    key = _extract_symbol(arg)
+                    :( $key = $Accessors.@o $arg )
+                end
+            end
+            return esc(:_), (esc(:( $ContainerOptic($oex) )),)
+        else
+            oex = @modify(ex.args[∗]) do arg
+                @debug "Individual argument" arg
+                if MacroTools.@capture arg (key_ = optic_)
+                    :( $key = $Accessors.@o $optic )
+                else
+                    :( $Accessors.@o $arg )
+                end
+            end
+            return esc(:_), (esc(:( $ContainerOptic($oex) )),)
+        end
+    elseif iscall(ex, :SVector) || iscall(ex, :MVector) || iscall(ex, :Pair) || iscall(ex, :(=>))
+        @debug "Captured SVector, MVector, Pair, or =>"
+        oex = @modify(ex.args[2:end][∗]) do arg
+            :( $Accessors.@o $arg )
+        end
+        return esc(:_), (esc(:( $ContainerOptic($oex) )),)
+    else
+        _parse_obj_optics(ex)
+    end
 end
 
 function aggregate_props(props)

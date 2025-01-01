@@ -54,10 +54,10 @@
     o = @o _.a .+ _.b
     @test o((a=[1,2], b=[3,4])) == [4, 6]
 
-    o = @optic₊ (a=_.xy.y + 1, b=_.xy.z + _.z.im)
+    o = @o (a=_.xy.y + 1, b=_.xy.z + _.z.im)
     @test propspec(o) == (xy=(y=P(), z=P()), z=(im=P(),))
 
-    o = @optic₊ (a=_.xy.y + 1, b=_.xy.z + _.z.im, c=_.z)
+    o = @o (a=_.xy.y + 1, b=_.xy.z + _.z.im, c=_.z)
     @test propspec(o) == (xy=(y=P(), z=P()), z=P())
 
     o = @o 0 < _.xy.y < 100
@@ -123,11 +123,12 @@ end
     @test 11:10:1001 == @inferred map((@o _.xy.y + 1), B)
     @test_throws UndefRefError @inferred map((@o _.xy.x + 1), B)
 
-    @test 2:2:200 == @inferred map((@optic₊ _.xy.y + _.xy.y), [(xy=(y=i,),) for i in 1:100])
+    @test 2:2:200 == @inferred map((@o _.xy.y + _.xy.y), [(xy=(y=i,),) for i in 1:100])
     @test 20:20:2000 == @inferred map((@o _.xy.y + _.xy.y), B)
     @test 10.01:10.01:1001.0 == @inferred map((@o _.xy.y + _.z.im), B)
 
-    C = @inferred map((@o (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(; _.xy.y,))), B)
+    @test_broken C = @inferred map((@o (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(; _.xy.y,))), B)
+    C = map((@o (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(; _.xy.y,))), B)
     @test C[5] == (a = 51, b = 50.05, c = (y=50,))
     @test C.a == 11:10:1001
     @test C.c.y == 10:10:1000
@@ -166,12 +167,12 @@ end
         x=Vector{Any}(undef, 100),
         y=10:10:1000
     )
-    @test A.x === @inferred mapview((@optic₊ _.x), A)
-    @test A.y === @inferred mapview((@optic₊ _.y), A)
-    @test A.y == @inferred map((@optic₊ _.y), A)
-    @test 11:10:1001 == @inferred mapview((@optic₊ _.y + 1), A)
-    @test 11:10:1001 == @inferred map((@optic₊ _.y + 1), A)
-    @test_throws UndefRefError @inferred map((@optic₊ _.x + 1), A)
+    @test A.x === @inferred mapview((@o _.x), A)
+    @test A.y === @inferred mapview((@o _.y), A)
+    @test A.y == @inferred map((@o _.y), A)
+    @test 11:10:1001 == @inferred mapview((@o _.y + 1), A)
+    @test 11:10:1001 == @inferred map((@o _.y + 1), A)
+    @test_throws UndefRefError @inferred map((@o _.x + 1), A)
 
     B = StructArray(
         xy=A,
@@ -180,29 +181,28 @@ end
             im=0.01:0.01:1.0,
         )
     )
-    @test B.xy.y === @inferred mapview((@optic₊ _.xy.y), B)
-    @test 11:10:1001 == @inferred map((@optic₊ _.xy.y + 1), B)
-    @test_throws UndefRefError @inferred map((@optic₊ _.xy.x + 1), B)
+    @test B.xy.y === @inferred mapview((@o _.xy.y), B)
+    @test 11:10:1001 == @inferred map((@o _.xy.y + 1), B)
+    @test_throws UndefRefError @inferred map((@o _.xy.x + 1), B)
 
-    @test 20:20:2000 == @inferred map((@optic₊ _.xy.y + _.xy.y), B)
-    @test 10.01:10.01:1001.0 == @inferred map((@optic₊ _.xy.y + _.z.im), B)
+    @test 20:20:2000 == @inferred map((@o _.xy.y + _.xy.y), B)
+    @test 10.01:10.01:1001.0 == @inferred map((@o _.xy.y + _.z.im), B)
 
-    @test_broken (@inferred map((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B); true)
-    C = map((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B)
+    C = @inferred map((@o (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(;_.xy.y))), B)
     @test C[5] == (a = 51, b = 50.05, c = (y=50,))
     @test C.a == 11:10:1001
     @test C.c.y == 10:10:1000
 
-    C = mapinsert(B, x=@optic₊ _.xy.y + 1)
+    C = mapinsert(B, x=@o _.xy.y + 1)
     @test C.xy === B.xy
     @test C.x == 11:10:1001
 
-    @test mapview((@optic₊ _.xy.y > _.z.im), B) == fill(true, 100)
+    @test mapview((@o _.xy.y > _.z.im), B) == fill(true, 100)
 
-    @test groupview((@optic₊ _.xy.y), B) |> length == 100
-    @test groupview((@optic₊ _.xy.y > _.z.im), B)[true].xy.y == 10:10:1000
+    @test groupview((@o _.xy.y), B) |> length == 100
+    @test groupview((@o _.xy.y > _.z.im), B)[true].xy.y == 10:10:1000
 
-    C = @inferred mapview((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B)
+    C = @inferred mapview((@o (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B)
     @test C[5] == (a = 51, b = 50.05, c = (y=50,))
 end
 

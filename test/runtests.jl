@@ -62,7 +62,7 @@ end
 
 
     @test modify(+, (a=(1, 2), b=3), (@o _.a[∗]), (b=4, a=(5, 6))) === (a=(6, 8), b=3)
-    @test modify(+, (a=(1, 2), b=3), (@optics _.a[∗] _.b), (b=4, a=(5, 6))) === (a=(6, 8), b=7)
+    @test modify(+, (a=(1, 2), b=3), (@o _.a[∗] _.b), (b=4, a=(5, 6))) === (a=(6, 8), b=7)
 
     @test modify(tuple, (1, 2), first, (3, 4), (5, 6)) === ((1, 3, 5), 2)
     @test modify(+, (1, 2), (@o first(_) + 1), (3, 4), (5, 6)) === (11, 2)
@@ -153,7 +153,7 @@ end
     @test modify(reverse, x, o) == (a=((b=4,), (b=3,), (b=2,)), c=1)
     o = (@o(_.a[∗].b) ++ @o(_.c)) ⨟ @o(_ |> PartsOf() |> _[2])
     @test modify(x -> x*10, x, o) == (a=((b=1,), (b=20,), (b=3,)), c=4)
-    o = (@o(_.a[∗].b) ++ @o(_.c)) ⨟ @o(_ |> PartsOf()) ⨟ @optics _[1] _[2]
+    o = (@o(_.a[∗].b) ++ @o(_.c)) ⨟ @o(_ |> PartsOf()) ⨟ @o _[1] _[2]
     @test modify(x -> x*10, x, o) == (a=((b=10,), (b=20,), (b=3,)), c=4)
     @test modify(
         xs -> round.(Int, xs ./ sum(xs) .* 100),
@@ -184,9 +184,9 @@ end
     @test set([(a=1,)], o, 'y') == [(a='x',)]
     @test setall([(a=1,)], o, ['y']) == [(a='x',)]
     @test modify(-, [(a=1,)], o) == [(a=-3,)]
-    o = logged(@optics _[∗].a + 1 _[1].a)
+    o = logged(@o _[∗].a + 1 _[1].a)
     @test getall([(a=1,)], o) == [2, 1]
-    o = logged(@optic₊ (_[1].a + 1, _[1].a))
+    o = logged(@o (_[1].a + 1, _[1].a))
     @test o([(a=1,)]) == (2, 1)
 end
 
@@ -208,7 +208,7 @@ end
     o = @o(_.a) ∘ onset(x -> @set x.tot = x.a + x.b)
     @test o(obj) === 1
     @test set(obj, o, 10) === (a=10, b=2, tot=12)
-    @test setall(obj, @optics(_.a, _.b) ∘ onset(x -> @set x.tot = x.a + x.b), (10, 20)) === (a=10, b=20, tot=30)
+    @test setall(obj, @o(_.a, _.b) ∘ onset(x -> @set x.tot = x.a + x.b), (10, 20)) === (a=10, b=20, tot=30)
 
     o = onget(x -> @set x.tot = x.a + x.b)
     @test o(obj) === (a=1, b=2, tot=3)

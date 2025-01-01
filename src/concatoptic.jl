@@ -127,28 +127,9 @@ set(obj, os::ContainerOptic{<:Dict}, vals) =
         set(obj, o, v)
     end
 
+# XXX: should deprecate
 macro optic₊(ex)
-    process_optic₊(ex) |> esc
-end
-
-function process_optic₊(ex)
-    if Base.isexpr(ex, :tuple) || Base.isexpr(ex, :vect)
-        oex = @modify(ex.args[∗]) do arg
-            if MacroTools.@capture arg (key_ = optic_)
-                :( $key = $(process_optic₊(optic)) )
-            else
-                process_optic₊(arg)
-            end
-        end
-        :( $ContainerOptic($oex) )
-    elseif iscall(ex, :SVector) || iscall(ex, :MVector) || iscall(ex, :Pair) || iscall(ex, :(=>))
-        oex = @modify(ex.args[2:end][∗]) do arg
-            process_optic₊(arg)
-        end
-        :( $ContainerOptic($oex) )
-    else
-        :( $Accessors.@o $ex )
-    end
+    :( $Accessors.@o $ex)
 end
 
 

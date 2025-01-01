@@ -90,7 +90,7 @@ end
     @test sprint(show, (@o _.a + _.b)) == "(@o _.a + _.b)"
     @test sprint(show, (@o _.a + _.b); context=:compact => true) == "_.a + _.b"
 
-    @test map(flat_concatoptic((a=1, b=(2, 3)), (@optics _.a exp(_.b[∗]))).optics) do o
+    @test map(flat_concatoptic((a=1, b=(2, 3)), (@o _.a exp(_.b[∗]))).optics) do o
         sprint(show, o; context=:compact => true)
     end == ("_.a", "exp(_.b[1])", "exp(_.b[2])")
 end
