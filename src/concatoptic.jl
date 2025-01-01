@@ -105,7 +105,7 @@ end
     @modify(o -> o(obj), values($(os.optics))[∗])
 
 function set(obj, os::ContainerOptic{<:Union{Tuple,Pair,AbstractArray}}, vals::Union{Tuple,Pair,AbstractArray})
-    length(os.optics) == length(vals) || throw(DimensionMismatch("length mismatch between optics ($(length(os))) and values ($(length(vals)))"))
+    length(os.optics) == length(vals) || throw(DimensionMismatch("length mismatch between optics ($(length(os.optics))) and values ($(length(vals)))"))
     foldl(map(tuple, os.optics, vals); init=obj) do obj, (o, v)
         set(obj, o, v)
     end
