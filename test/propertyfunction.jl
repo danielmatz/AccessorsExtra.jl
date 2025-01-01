@@ -53,6 +53,12 @@
 
     o = @o _.a .+ _.b
     @test o((a=[1,2], b=[3,4])) == [4, 6]
+
+    o = @optic₊ (a=_.xy.y + 1, b=_.xy.z + _.z.im)
+    @test propspec(o) == (xy=(y=P(), z=P()), z=(im=P(),))
+
+    o = @optic₊ (a=_.xy.y + 1, b=_.xy.z + _.z.im, c=_.z)
+    @test propspec(o) == (xy=(y=P(), z=P()), z=P())
 end
 
 @testitem "maybe" begin

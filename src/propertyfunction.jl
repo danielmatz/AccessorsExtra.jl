@@ -72,7 +72,7 @@ propspec(f::PropertyLens{P}) where {P} = NamedTuple{(P,)}((Placeholder(),))
 propspec(f::PropertyFunction) = f.props_nt
 propspec(f::ComposedFunction) = propspec(f.inner)
 propspec(f::ComposedFunction{<:Any,PropertyLens{P}}) where {P} = NamedTuple{(P,)}((propspec(f.outer),))
-propspec(f::ContainerOptic) = merge(map(f.optics) do o
+propspec(f::ContainerOptic) = rmerge(map(f.optics) do o
     propspec(o)
 end...)
 
@@ -82,3 +82,31 @@ extract_properties_recursive(x, ::Placeholder) = x
 extract_properties_recursive(x::NamedTuple, props_nt::NamedTuple{KS}) where {KS} = NamedTuple{KS}(map(extract_properties_recursive, values(x[KS]), values(props_nt)))
 # should work equally well, but hits inference recursion limit:
 # extract_properties_recursive(x::NamedTuple, props_nt::NamedTuple{KS}) where {KS} = map(extract_properties_recursive, x[KS], props_nt)
+
+
+rmerge(a, objs...) = foldl(rmerge, objs; init=a)
+rmerge(a::NamedTuple, b::NamedTuple) = _mergewith(rmerge, a, b)
+rmerge(a::Placeholder, b) = a
+rmerge(a, b::Placeholder) = b
+rmerge(a::Placeholder, b::Placeholder) = a
+rmerge(a, b) where {T} =
+    if a === b
+        a
+    else
+        error("Don't know how to merge $a and $b")
+    end
+
+# https://github.com/JuliaLang/julia/pull/53558
+@generated function _mergewith(combine, a::NamedTuple{an}, b::NamedTuple{bn}) where {an, bn}
+    names = Base.merge_names(an, bn)
+    vals = map(names) do n
+        if Base.sym_in(n, an) && Base.sym_in(n, bn)
+            :(combine(a.$n, b.$n))
+        elseif Base.sym_in(n, an)
+            :(a.$n)
+        elseif Base.sym_in(n, bn)
+            :(b.$n)
+        end
+    end
+    :( NamedTuple{$names}(($(vals...),)) )
+end
