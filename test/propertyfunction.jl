@@ -65,6 +65,12 @@
 
     o = @o 0 < _.xy.y && _.z.im > _.xy.z
     @test propspec(o) == (xy=(y=P(), z=P()), z=(im=P(),))
+
+    o = @o atan(_.a...)
+    @test propspec(o) == (a=P(),)
+
+    o = @o _.a .+ 1
+    @test propspec(o) == (a=P(),)
 end
 
 @testitem "maybe" begin
