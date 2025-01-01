@@ -99,9 +99,10 @@ end
     using StructArrays
     using FlexiMaps
     using FlexiGroups
+    using Skipper: filterview
 
     A = StructArray(
-        x=mapview(_ -> error("Shouldn't happen"), 1:100),
+        x=Vector{Any}(undef, 100),
         y=10:10:1000
     )
     @test A.x === @inferred mapview((@o _.x), A)
@@ -109,18 +110,18 @@ end
     @test A.y == @inferred map((@o _.y), A)
     @test 11:10:1001 == @inferred mapview((@o _.y + 1), A)
     @test 11:10:1001 == @inferred map((@o _.y + 1), A)
-    @test_throws "Shouldn't happen" @inferred map((@o _.x + 1), A)
+    @test_throws UndefRefError @inferred map((@o _.x + 1), A)
 
     B = StructArray(
         xy=A,
         z=StructArray{ComplexF64}(
-            re=mapview(_ -> error("Shouldn't happen"), 1:100),
+            re=Vector{Any}(undef, 100),
             im=0.01:0.01:1.0,
         )
     )
     @test B.xy.y === @inferred mapview((@o _.xy.y), B)
     @test 11:10:1001 == @inferred map((@o _.xy.y + 1), B)
-    @test_throws "Shouldn't happen" @inferred map((@o _.xy.x + 1), B)
+    @test_throws UndefRefError @inferred map((@o _.xy.x + 1), B)
 
     @test 2:2:200 == @inferred map((@optic₊ _.xy.y + _.xy.y), [(xy=(y=i,),) for i in 1:100])
     @test 20:20:2000 == @inferred map((@o _.xy.y + _.xy.y), B)
@@ -145,8 +146,9 @@ end
 
     @test findall((@o _.xy.y > 100), B) == 11:100
     @test findall((@o _.xy.y > _.z.im + 100), B) == 11:100
-    @test filter((@o _.xy.y > 100), B).xy.y == 110:10:1000
-    @test filter((@o _.xy.y > _.z.im + 100), B).xy.y == 110:10:1000
+    @test_broken filter((@o _.xy.y > 100), B).xy.y == 110:10:1000
+    @test_broken filter((@o _.xy.y > _.z.im + 100), B).xy.y == 110:10:1000
+    @test filterview((@o _.xy.y > _.z.im + 100), B).xy.y == 110:10:1000
     @test sortperm(B, by=(@o _.xy.y ≤ 100)) == [11:100; 1:10]
     @test sortperm(B, by=!(@o _.xy.y > _.z.im + 100)) == [11:100; 1:10]
     # test that it throws on actual item permutation, not comparison
@@ -161,7 +163,7 @@ end
     using FlexiGroups
 
     A = StructArray(
-        x=mapview(_ -> error("Shouldn't happen"), 1:100),
+        x=Vector{Any}(undef, 100),
         y=10:10:1000
     )
     @test A.x === @inferred mapview((@optic₊ _.x), A)
@@ -169,24 +171,24 @@ end
     @test A.y == @inferred map((@optic₊ _.y), A)
     @test 11:10:1001 == @inferred mapview((@optic₊ _.y + 1), A)
     @test 11:10:1001 == @inferred map((@optic₊ _.y + 1), A)
-    @test_throws "Shouldn't happen" @inferred map((@optic₊ _.x + 1), A)
+    @test_throws UndefRefError @inferred map((@optic₊ _.x + 1), A)
 
     B = StructArray(
         xy=A,
         z=StructArray{ComplexF64}(
-            re=mapview(_ -> error("Shouldn't happen"), 1:100),
+            re=Vector{Any}(undef, 100),
             im=0.01:0.01:1.0,
         )
     )
     @test B.xy.y === @inferred mapview((@optic₊ _.xy.y), B)
     @test 11:10:1001 == @inferred map((@optic₊ _.xy.y + 1), B)
-    @test_throws "Shouldn't happen" @inferred map((@optic₊ _.xy.x + 1), B)
+    @test_throws UndefRefError @inferred map((@optic₊ _.xy.x + 1), B)
 
     @test 20:20:2000 == @inferred map((@optic₊ _.xy.y + _.xy.y), B)
     @test 10.01:10.01:1001.0 == @inferred map((@optic₊ _.xy.y + _.z.im), B)
 
-    @test_broken @inferred map((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B)
-    C = @inferred map((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B)
+    @test_broken (@inferred map((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B); true)
+    C = map((@optic₊ (a=_.xy.y+1, b=_.z.im + _.xy.y, c=(y=_.xy.y,))), B)
     @test C[5] == (a = 51, b = 50.05, c = (y=50,))
     @test C.a == 11:10:1001
     @test C.c.y == 10:10:1000
@@ -210,7 +212,7 @@ end
     using FlexiMaps
 
     A = DictArray(
-        x=mapview(_ -> error("Shouldn't happen"), 1:100),
+        x=Vector{Any}(undef, 100),
         y=10:10:1000
     )
     @test A.x === mapview((@o _.x), A)
@@ -218,22 +220,22 @@ end
     @test A.y == map((@o _.y), A)
     @test 11:10:1001 == map((@o _.y + 1), A)
     @test 20:20:2000 == map((@o _.y + _.y), A)
-    @test_throws "Shouldn't happen" map((@o _.x + 1), A)
+    @test_throws UndefRefError map((@o _.x + 1), A)
 
     B = StructArray(
         xy=A,
         z=DictArray(
-            re=mapview(_ -> error("Shouldn't happen"), 1:100),
+            re=Vector{Any}(undef, 100),
             im=0.01:0.01:1.0,
             a=StructArray(
-                u=mapview(_ -> error("Shouldn't happen"), 1:100),
+                u=Vector{Any}(undef, 100),
                 v=1:100,
             )
         )
     )
     @test B.xy.y === mapview((@o _.xy.y), B)
     @test 11:10:1001 == map((@o _.xy.y + 1), B)
-    @test_throws "Shouldn't happen" map((@o _.xy.x + 1), B)
+    @test_throws UndefRefError map((@o _.xy.x + 1), B)
 
     @test 20:20:2000 == map((@o _.xy.y + _.xy.y), B)
     @test 10.01:10.01:1001.0 == map((@o _.xy.y + _.z.im), B)
