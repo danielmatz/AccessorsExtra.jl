@@ -81,7 +81,7 @@ end
     @test sprint(show, @o(sort(_, by=abs))) == "(@o sort(_, by=abs))"
     @test sprint(show, @o(sort(_, 1, by=abs))) == "(@o sort(_, 1, by=abs))"
     @test sprint(show, first ⩔ last) == "first ⩔ last"
-    @test sprint(show, (@o _.a) ⩓ (@o last(_.b) > 1)) == "(@o _.a) ⩓ (@o >(last(_.b), 1))"
+    @test sprint(show, (@o _.a) ⩓ (@o last(_.b) > 1)) == "(@o _.a) ⩓ (@o last(_.b) > 1)"
     @test sprint(show, @o(_ |> keyed(∗))) == "keyed((@o _[∗]))"
     @test sprint(show, @o(_.a |> enumerated(∗ₚ))) == "(@o _.a |> enumerated((@o _[∗ₚ])))"
     @test sprint(show, @o(_.a[∗ₚ] |> selfcontext() |> _.b)) == "(ᵢ(@o _.b))ᵢ ∘ (@o _.a[∗ₚ] |> selfcontext(identity))"
@@ -102,11 +102,16 @@ end
     @test barebones_string(@o _[∗].b) == "[∗].b"
     @test barebones_string(@o _[∗ₚ]) == "[∗ₚ]"
     @test barebones_string(@o atan(_...)) == "atan(_...)"
-    @test barebones_string(@o _ + 1) == "+(_, 1)"
+    @test barebones_string(@o _ + 1) == "_ + 1"
     @test barebones_string(@o _) == "_"
     @test barebones_string(@o atan(_.a...)) == "atan(a...)"
     @test barebones_string(@o tuple(_, 1, 2)) == "tuple(_, 1, 2)"
     @test barebones_string(@o _ + 1 + 2) == "+(_, 1, 2)"
     @test barebones_string(@o sort(_, by=abs)) == "sort(_, by=abs)"
     @test barebones_string(@o sort(_, 1, by=abs)) == "sort(_, 1, by=abs)"
+
+    # pow and literal_pow:
+    @test barebones_string(@o _ ^ 2.5) == "_ ^ 2.5"
+    @test barebones_string(@o _ ^ 2) == "_ ^ 2"
+    @test barebones_string(@o 2 ^ _) == "2 ^ _"
 end
