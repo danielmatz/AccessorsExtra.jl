@@ -8,14 +8,15 @@
 @inline modify(f, A::Tuple, ::Properties, B::Tuple) = error("modify not supported for different lengths: $(length(A)) vs $(length(B))")
 @inline modify(f, A, ::Properties, Bs...) = setproperties(A, modify(f, getproperties(A), Properties(), getproperties.(Bs)...))
 
-modify(f, A, o::ComposedFunction, Bs...) =
-    modify(A, o.inner, Bs...) do a, bs...
-        modify(f, a, o.outer, bs...)
+# when transferring these to Accessors, can remove separate "B" argument
+modify(f, A, o::ComposedFunction, B, Bs...) =
+    modify(A, o.inner, B, Bs...) do a, b, bs...
+        modify(f, a, o.outer, b, bs...)
     end
 
-@inline modify(f, A, o, Bs...) =
+@inline modify(f, A, o, B, Bs...) =
     modify(A, o) do a
-        f(a, map(o, Bs)...)
+        f(a, o(B), map(o, Bs)...)
     end
 
 # functionality is useful: "take elements according to their indices, not iteration order"
