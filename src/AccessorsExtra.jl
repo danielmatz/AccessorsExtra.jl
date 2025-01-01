@@ -49,6 +49,29 @@ include("../ext/LinearAlgebraExt.jl")
 include("../ext/TestExt.jl")
 
 
+function __init__()
+    if isdefined(Base.Experimental, :register_error_hint)
+        Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
+            if exc.f === construct
+                println(io); println(io)
+                T = argtypes[1]
+                # T isa Type || println(io, "First argument to `construct` should be a type, got $T")
+                IU = get(Base.loaded_modules, Base.PkgId(Base.UUID("b77e0a4c-d291-57a0-90e8-8db25a27a240"), "InteractiveUtils"), nothing)
+                isnothing(IU) && (println(io, "Load InteractiveUtils for more hints"); return)
+                argstrs = map(argtypes[2:end]) do at
+                    at isa Type{<:Pair} ? "::$(at.parameters[1]) => ..." : "not a Pair! $at"
+                end
+                println(io, "Called as:\nconstruct($T, $(join(argstrs, ", ")))\n")
+                println(io, "Available for construct($T):")
+                for m in IU.methodswith(Type{<:T}, construct; supertypes=false)
+                    println(io, m)
+                end
+            end
+        end
+    end
+end
+
+
 barebones_string(optic) = @p let
     sprint(show, optic; context=:compact => true)
     replace(__, "_." => "", "_[" => "[")
