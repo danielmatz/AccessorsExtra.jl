@@ -23,6 +23,7 @@ export
     FlexIx,
     get_steps, logged
 
+include("utils.jl")
 include("overrides.jl")
 include("concatoptic.jl")
 include("and_or.jl")
