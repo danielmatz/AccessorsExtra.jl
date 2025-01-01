@@ -184,6 +184,12 @@ end
     @test set((a=1, b=2), o, 10) == (a=10, b=2)
     @test set((c=1, b=2), o, 10) == (c=1, b=10)
     @test_throws "no optic" set((c=1,), o, 10)
+
+    o = osomething(@o(_.a), @o(error(_.b)))
+    @test o((a=1, b=2)) == 1
+    @test_throws ErrorException o((c=1, b=2))
+    @test set((a=1, b=2), o, 10) == (a=10, b=2)
+    @test_throws "error" set((c=1, b=2), o, 10)
 end
 
 @testitem "@osomething" begin
