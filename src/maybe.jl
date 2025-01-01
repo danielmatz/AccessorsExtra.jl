@@ -106,9 +106,9 @@ oget(default::Base.Callable, obj, o) = hasoptic(obj, o) ? o(obj) : default()
 oget(obj, o, default=nothing) = hasoptic(obj, o) ? o(obj) : default
 
 
-set(obj, fa::FixArgs{typeof(get), <:Tuple{Placeholder,Any,Any}, <:NamedTuple{()}}, val) =
+set(obj, fa::FixArgsT(get, (Placeholder,Any,Any), (;)), val) =
     haskey(obj, fa.args[2]) ? set(obj, IndexLens((fa.args[2],)), val) : insert(obj, IndexLens((fa.args[2],)), val)
-set(obj, fa::FixArgs{typeof(get), <:Tuple{Any,Placeholder,Any}, <:NamedTuple{()}}, val) =
+set(obj, fa::FixArgsT(get, (Any,Placeholder,Any), (;)), val) =
     haskey(obj, fa.args[3]) ? set(obj, IndexLens((fa.args[3],)), val) : insert(obj, IndexLens((fa.args[3],)), val)
 
 

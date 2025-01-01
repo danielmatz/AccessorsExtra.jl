@@ -25,6 +25,11 @@ end
     fa.f(args...; fa.kwargs...)
 end
 
+function FixArgsT(f::Function, args::Tuple, kwargs::NamedTuple)
+    @assert Base.issingletontype(typeof(f))
+    FixArgs{typeof(f), <:Tuple{args...}, <:NamedTuple{keys(kwargs), <:Tuple{kwargs...}}}
+end
+
 Base.show(io::IO, fa::FixArgs) = Accessors.show_optic(io, fa)
 Base.show(io::IO, ::MIME"text/plain", fa::FixArgs) = show(io, fa)
 
