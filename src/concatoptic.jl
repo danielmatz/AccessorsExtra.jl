@@ -34,6 +34,13 @@ macro optics(exs...)
     end
     :( $concat($(optic_exs...)) ) |> esc
 end
+# same as @optics – should just use @optic and deprecate @optics?..
+macro optic(ex1, ex2, exs...)
+    optic_exs = map([ex1, ex2, exs...]) do ex
+        :($Accessors.@o $ex)
+    end
+    :( $concat($(optic_exs...)) ) |> esc
+end
 
 
 function getall(obj, co::ConcatOptics)

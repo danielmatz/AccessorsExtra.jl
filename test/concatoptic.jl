@@ -14,6 +14,7 @@
     @test (@optics _.a _.b) ++ (@optics _.c _.d) === @optics _.a _.b _.c _.d
     @test (@optics _.a _.b) ++ (@o _.c) === @optics _.a _.b _.c
     @test (@optics _.a _.b) ++ concat() ++ (@o _.c) === @optics _.a _.b _.c
+    @test (@optics _.a _.b) === @o _.a _.b
 
     obj = (a=1, bs=((c=2, d=3), (c=4, d=5)))
     o = concat(a=@o(_.a), c=@o(first(_.bs) |> _.c))
