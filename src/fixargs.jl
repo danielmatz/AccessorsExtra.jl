@@ -25,6 +25,7 @@ end
     fa.f(args...; fa.kwargs...)
 end
 
+FixArgsT(f::Function, args::Tuple) = FixArgsT(f, args, (;))
 FixArgsT(f::Function, args::Tuple, kwargs::NamedTuple) = FixArgsT(f, Tuple{args...}, NamedTuple{keys(kwargs), <:Tuple{kwargs...}})
 FixArgsT(f::Function, args::Type, kwargs::NamedTuple) = FixArgsT(f, args, NamedTuple{keys(kwargs), <:Tuple{kwargs...}})
 FixArgsT(f::Function, args::Tuple, kwargs::Type) = FixArgsT(f, Tuple{args...}, kwargs)
@@ -37,7 +38,7 @@ Base.show(io::IO, fa::FixArgs) = Accessors.show_optic(io, fa)
 Base.show(io::IO, ::MIME"text/plain", fa::FixArgs) = show(io, fa)
 
 Accessors._shortstring(prev, fa::FixArgs) = "$(fa.f)($(_args_str(prev, fa.args))$(_args_str(prev, fa.kwargs)))"
-Accessors._shortstring(prev, fa::FixArgsT(Base.literal_pow, (Any, Placeholder, Val), (;))) = Accessors._shortstring(prev, Base.Fix2(fa.args[1], _extract_val(fa.args[3])))
+Accessors._shortstring(prev, fa::FixArgsT(Base.literal_pow, (Any, Placeholder, Val))) = Accessors._shortstring(prev, Base.Fix2(fa.args[1], _extract_val(fa.args[3])))
 _args_str(prev, args::Tuple) = @p let
     args
     map(_ isa Placeholder ? prev : _)
@@ -57,6 +58,6 @@ for kws in [(:rev,), (:by,), (:rev, :by), (:by, :rev)]
     @eval modify(f, obj, o::FixArgsT(sort, (Placeholder,), NamedTuple{$kws})) = @modify(f, obj[sortperm(obj; o.kwargs...)])
 end
 
-InverseFunctions.inverse(f::FixArgsT(Base.literal_pow, (typeof(^), Placeholder, Val), (;))) =
+InverseFunctions.inverse(f::FixArgsT(Base.literal_pow, (typeof(^), Placeholder, Val))) =
     fixargs(Base.literal_pow, ^, Placeholder(), Val(inv(_extract_val(f.args[3]))))
 _extract_val(::Val{P}) where {P} = P
