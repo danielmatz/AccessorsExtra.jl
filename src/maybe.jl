@@ -137,7 +137,13 @@ hasoptic(obj, o) = !isnothing(obj)
 # convenience macros
 macro oget(ref, default=nothing)
     obj, optic = parse_obj_optic(ref)
-    return :($oget($obj, $optic, $default))
+    return quote
+        if $hasoptic($obj, $optic)
+            $optic($obj)
+        else
+            $default
+        end 
+    end
 end
 
 macro osomething(args...)

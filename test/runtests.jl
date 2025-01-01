@@ -307,10 +307,15 @@ end
 
     x = (a=[1, 2],)
     @test (@oget x.a[2] 123) === 2
+    @test (@oget x.a[2] error()) === 2
     @test (@oget x.a[3] 123) === 123
     @test (@oget x.a[2]) === 2
     @test (@oget x.a[3]) === nothing
     @test (@oget f(x.a[2]) 123) === 4
+    # @test (@oget x.a[2] x.a[3] 123) === 2
+    # @test (@oget x.a[3] x.a[2] 123) === 2
+    # @test (@oget x.a[3] x.a[2] error()) === 2
+    # @test (@oget x.a[3] x.a[4] 123) === 123
 
     @test osomething(@o(_.a)) === @osomething _.a
     @test osomething(@o(_.a), @o(_.b)) === @osomething _.a _.b
