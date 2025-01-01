@@ -91,6 +91,11 @@ function modify(f, obj, o::MaybeOptic)
 end
 
 
+Accessors._shortstring(prev, o::MaybeOptic) = Accessors._shortstring(prev, o.o) * "?" * (
+    isnothing(o.default) || ismissing(o.default) || (o.default isa Number && isnan(o.default)) ?
+    "" : string(o.default)
+)
+
 struct OSomething{OS}
     os::OS
 end

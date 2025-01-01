@@ -7,6 +7,8 @@ end
 Base.show(io::IO, pf::PropertyFunction) = get(io, :compact, false) ? print(io, pf.expr) : print(io, "(@o ", pf.expr, ")")
 Base.show(io::IO, ::MIME"text/plain", pf::PropertyFunction) = show(io, pf)
 
+Accessors._shortstring(prev, o::PropertyFunction) = sprint(show, o; context=:compact => true)
+
 (pf::PropertyFunction{props})(obj) where {props} = pf.func(obj)
 
 function hasoptic(obj, pf::PropertyFunction)
