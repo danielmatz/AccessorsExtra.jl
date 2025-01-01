@@ -103,6 +103,7 @@ end
     @test barebones_string(@o _[∗ₚ]) == "[∗ₚ]"
     @test barebones_string(@o atan(_...)) == "atan(_...)"
     @test barebones_string(@o _ + 1) == "+(_, 1)"
+    @test barebones_string(@o _) == "_"
     @test barebones_string(@o atan(_.a...)) == "atan(a...)"
     @test barebones_string(@o tuple(_, 1, 2)) == "tuple(_, 1, 2)"
     @test barebones_string(@o _ + 1 + 2) == "+(_, 1, 2)"
