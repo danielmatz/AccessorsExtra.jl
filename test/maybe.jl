@@ -170,10 +170,18 @@ end
     @test (@oget x.a[2]) === 2
     @test (@oget x.a[3]) === nothing
     @test (@oget f(x.a[2]) 123) === 4
-    # @test (@oget x.a[2] x.a[3] 123) === 2
-    # @test (@oget x.a[3] x.a[2] 123) === 2
-    # @test (@oget x.a[3] x.a[2] error()) === 2
-    # @test (@oget x.a[3] x.a[4] 123) === 123
+
+    @test (@oget x.a[2] x.a[3]) === 2
+    @test (@oget x.a[3] x.a[2]) === 2
+    @test (@oget 123) === 123
+    @test (@oget 123 456) === 123
+    @test (@oget 123 x.a[2]) === 123
+
+    @test (@oget x.a[3] x.a[2] 123) === 2
+    @test (@oget x.a[3] x.a[2] error()) === 2
+    @test (@oget x.a[2] error() 123) === 2
+    @test_throws ErrorException (@oget x.a[3] error() 123)
+    @test (@oget x.a[3] x.a[4] 123) === 123
 end
 
 @testitem "osomething" begin

@@ -135,14 +135,17 @@ hasoptic(obj, o) = !isnothing(obj)
 
 
 # convenience macros
-macro oget(ref, default=nothing)
-    obj, optic = parse_obj_optic(ref)
-    return quote
-        if $hasoptic($obj, $optic)
-            $optic($obj)
-        else
-            $default
-        end 
+macro oget(refs...)
+    foldr(refs, init=nothing) do ref, curexpr
+        obj, optic = parse_obj_optic(ref)
+        quote
+            optic = $optic
+            if $hasoptic($obj, optic)
+                optic($obj)
+            else
+                $curexpr
+            end
+        end
     end
 end
 
