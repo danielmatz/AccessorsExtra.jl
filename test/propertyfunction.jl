@@ -59,6 +59,12 @@
 
     o = @optic₊ (a=_.xy.y + 1, b=_.xy.z + _.z.im, c=_.z)
     @test propspec(o) == (xy=(y=P(), z=P()), z=P())
+
+    o = @o 0 < _.xy.y < 100
+    @test propspec(o) == (xy=(y=P(),),)
+
+    o = @o 0 < _.xy.y && _.z.im > _.xy.z
+    @test propspec(o) == (xy=(y=P(), z=P()), z=(im=P(),))
 end
 
 @testitem "maybe" begin

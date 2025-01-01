@@ -75,6 +75,7 @@ propspec(f::ComposedFunction{<:Any,PropertyLens{P}}) where {P} = NamedTuple{(P,)
 propspec(f::ContainerOptic) = rmerge(map(f.optics) do o
     propspec(o)
 end...)
+propspec(f::Union{⩓,⩔}) = rmerge(propspec(f.f), propspec(f.g))
 
 
 extract_properties_recursive(x, _) = x
