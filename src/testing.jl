@@ -3,6 +3,7 @@ _expr_to_symb(e::Expr)::Union{Nothing,Symbol} = eval(e)
 
 _extract_symbol(e::Symbol) = e
 function _extract_symbol(e::Expr)::Symbol
+    Base.isexpr(e, :curly) && return _extract_symbol(e.args[1])
     @assert Base.isexpr(e, :.) && length(e.args) == 2 && e.args[2] isa QuoteNode
     return e.args[2].value
 end
