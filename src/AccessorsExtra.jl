@@ -25,6 +25,7 @@ export
 
 include("overrides.jl")
 include("concatoptic.jl")
+include("and_or.jl")
 include("keyvalues.jl")
 include("flexix.jl")
 include("fixargs.jl")
@@ -83,23 +84,6 @@ function set(obj, f::Base.Fix1{typeof(getindex)}, val)
 end
 
 Accessors._shortstring(prev, o::Base.Splat) = "$(o.f)($prev...)"
-
-
-struct ⩓{F,G}
-    f::F
-    g::G
-end
-(c::⩓)(x) = c.f(x) && c.g(x)
-
-struct ⩔{F,G}
-    f::F
-    g::G
-end
-(c::⩔)(x) = c.f(x) || c.g(x)
-
-Base.show(io::IO, f::⩓) = print(io, f.f, " ⩓ ", f.g)
-Base.show(io::IO, f::⩔) = print(io, f.f, " ⩔ ", f.g)
-
 
 # unambiguous for unitranges, but tension with general array @set first(x)...
 # piracy
