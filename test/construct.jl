@@ -99,6 +99,7 @@ end
     test_construct_laws(SVector{2}, @o(_.x) => 4, @o(_.y) => 5)
     test_construct_laws(SVector{2}, @o(_.y) => 4, @o(_.x) => 5)
     test_construct_laws(SVector{2,Float32}, @o(_.x) => 4, @o(_.y) => 5)
+    test_construct_laws(SVector{2,Real}, @o(_.x) => 4, @o(_.y) => 5, inferred=false, type=SVector{2,<:Real})
 end
 
 @testitem "macro" begin
