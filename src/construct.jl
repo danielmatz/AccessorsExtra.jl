@@ -99,7 +99,7 @@ end
 
 function _process_invertible(f, x)
     fi, fo = _split_invertible(decompose(f))
-    _compose(fo...) => _compose(fi...)(x)
+    ∘(fo...) => ∘(fi...)(x)
 end
 
 _split_invertible(fs::Tuple{}) = ((), ())
@@ -113,9 +113,8 @@ function _split_invertible(fs::Tuple)
     end
 end
 
-_compose(args...) = compose(args...)
-_compose() = identity
-
+# minor piracy, https://github.com/JuliaLang/julia/pull/52436
+Base.:∘() = identity
 
 macro construct(exprs...)
     T, args... = exprs
