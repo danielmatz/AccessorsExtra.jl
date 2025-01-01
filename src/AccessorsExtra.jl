@@ -153,4 +153,9 @@ ongetset(f) = onget(f) ∘ onset(f)
 # should probably try to upstream:
 set(obj, o::Base.Fix1{typeof(in)}, val::Bool) = val ? union(obj, (o.x,)) : setdiff(obj, (o.x,))
 
+# min and max as well
+set(obj, o::Union{Base.Fix1{typeof(max)}, Base.Fix2{typeof(max)}}, val) = val ≥ o.x ? val : throw(ArgumentError("Value $val is lower than the other `max` argument $(o.x)"))
+set(obj, o::Union{Base.Fix1{typeof(min)}, Base.Fix2{typeof(min)}}, val) = val ≤ o.x ? val : throw(ArgumentError("Value $val is higher than the other `min` argument $(o.x)"))
+set(obj, o::FixArgsT(clamp, (Placeholder, Any, Any)), val) = o.args[2] ≤ val ≤ o.args[3] ? val : throw(ArgumentError("Value $val is out of `clamp` bounds $(o.args[2]) .. $(o.args[3])"))
+
 end
