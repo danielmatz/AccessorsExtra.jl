@@ -90,7 +90,7 @@ rmerge(a::NamedTuple, b::NamedTuple) = _mergewith(rmerge, a, b)
 rmerge(a::Placeholder, b) = a
 rmerge(a, b::Placeholder) = b
 rmerge(a::Placeholder, b::Placeholder) = a
-rmerge(a, b) where {T} =
+rmerge(a, b) =
     if a === b
         a
     else
