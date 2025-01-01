@@ -40,6 +40,10 @@ end
     @test_broken @eval (@o sort(_; by=identity))([-3, 1, 2, 0]) == [-3, 0, 1, 2]
     @test_broken @eval (@o sort(_; by=abs))([-3, 1, 2, 0]) == [0, 1, 2, -3]
 
+    test_getset_laws((@o sort(_, rev=true)), [-3, 1, 2, 0], [40, 30, 20, 10], 4:-1:1)
+    test_getset_laws((@o sort(_, by=abs)), [-3, 1, 2, 0], [10, -20, 30, 40], 1:4)
+    test_getset_laws((@o sort(_, by=abs, rev=true)), [-3, 1, 2, 0], [10, -20, 30, 40]|>reverse, 1:4|>reverse)
+
     @test (@o atan(_...)) === splat(atan)
     @test (@o atan(reverse(_)...)) === splat(atan) ∘ reverse
 end
