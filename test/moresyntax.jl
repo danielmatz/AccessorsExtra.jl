@@ -6,6 +6,13 @@
     @test !(<(5) ⩓ >(1) ⩔ >(2))(0)
     @test !(<(5) ⩓ (x->throw("")))(6)
     @test (<(5) ⩔ (x->throw("")))(4)
+
+    f = x->x+1
+    # @test (@o _.a && 10 > 0) === (@o _.a) ⩓ (@o _.b > 0)
+    @test (@o _.a || f(_.b) > 0) === (@o _.a) ⩔ (@o f(_.b) > 0)
+    @test (@o _.a && _.b > 0) === (@o _.a) ⩓ (@o _.b > 0)
+    @test (@o _.a || _.b > 0 && _.a < 1) === (@o _.a) ⩔ ((@o _.b > 0) ⩓ (@o _.a < 1))
+    @test (@o 0 < f(_.a) ≤ 10) === (@o 0 < f(_.a)) ⩓ (@o f(_.a) ≤ 10)
 end
 
 @testitem "fixargs" begin

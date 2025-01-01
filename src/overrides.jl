@@ -53,6 +53,19 @@ function parse_obj_optics(ex::Expr)
             backoptic = (esc(back),)
         end
         return obj, tuple(frontoptic..., backoptic...)
+    elseif @capture(ex, (left_ && right_)) || @capture(ex, (left_ || right_))
+        objl, leftoptic = parse_obj_optic(left)
+        objr, rightoptic = parse_obj_optic(right)
+        @assert objl == objr
+        obj = objl
+        operator = Dict(:&& => ⩓, :|| => ⩔)[ex.head]
+        return obj, (:($operator($leftoptic, $rightoptic)),)
+    elseif Base.isexpr(ex, :comparison) && length(ex.args) == 5 && !tree_contains(ex.args[1], :_) && !tree_contains(ex.args[5], :_)
+        obj1, optic1 = parse_obj_optic(:($(ex.args[2])($(ex.args[1]), $(ex.args[3]))))
+        obj2, optic2 = parse_obj_optic(:($(ex.args[4])($(ex.args[3]), $(ex.args[5]))))
+        @assert obj1 == obj2
+        obj = obj1
+        return obj, (:($⩓($optic1, $optic2)),)
     elseif @capture(ex, front_[indices__])
         if !tree_contains(front, :_) && any(ind -> tree_contains(ind, :_), indices)
             ind = only(indices)
