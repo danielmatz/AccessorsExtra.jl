@@ -61,6 +61,12 @@ end
 
     @test modify(+, (a=(1, 2), b=3), (@o _.a[∗]), (b=4, a=(5, 6))) === (a=(6, 8), b=3)
     @test modify(+, (a=(1, 2), b=3), (@optics _.a[∗] _.b), (b=4, a=(5, 6))) === (a=(6, 8), b=7)
+
+    @test modify(tuple, (1, 2), first, (3, 4), (5, 6)) === ((1, 3, 5), 2)
+    @test modify(+, (1, 2), (@o first(_) + 1), (3, 4), (5, 6)) === (11, 2)
+    @test modify(+, (1, 2), (@o _[∗] + 1), (3, 4), (5, 6)) === (11, 14)
+
+    # @test modify(tuple, (a=(1, 2), b=3), (@maybe _.a[∗]), ()) === (a=((1,nothing), (2,nothing)), b=7)
     end
 end
 
