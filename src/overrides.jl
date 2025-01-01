@@ -40,12 +40,14 @@ _esc_and_dot_name_to_broadcasted(f::Symbol) =
 # - splat
 # - ⩓, ⩔, _ < _ < _ support
 function parse_obj_optics(ex::Expr)
+    @debug "Parsing optic" ex
     dollar_exprs = foldtree([], ex) do exs, x
         x isa Expr && x.head == :$ ?
             push!(exs, only(x.args)) :
             exs
     end
     if !isempty(dollar_exprs)
+        @debug "Has dollar expressions" dollar_exprs
         length(dollar_exprs) == 1 || error("Only a single dollar-expression is supported")
         # obj is the only dollar-expression:
         obj = esc(only(dollar_exprs))
@@ -55,6 +57,7 @@ function parse_obj_optics(ex::Expr)
     end
 
     if @capture(ex, (front_ |> back_))
+        @debug "Captured front_ |> back_" front back
         obj, frontoptic = parse_obj_optics(front)
         backoptic = try
             # allow e.g. obj |> first |> _.a.b
@@ -69,6 +72,7 @@ function parse_obj_optics(ex::Expr)
         end
         return obj, tuple(frontoptic..., backoptic...)
     elseif @capture(ex, (left_ && right_)) || @capture(ex, (left_ || right_))
+        @debug "Captured left_ && right_ or left_ || right_" left right
         objl, leftoptic = parse_obj_optic(left)
         objr, rightoptic = parse_obj_optic(right)
         @assert objl == objr
@@ -76,12 +80,14 @@ function parse_obj_optics(ex::Expr)
         operator = Dict(:&& => ⩓, :|| => ⩔)[ex.head]
         return obj, (:($operator($leftoptic, $rightoptic)),)
     elseif Base.isexpr(ex, :comparison) && length(ex.args) == 5 && !tree_contains(ex.args[1], :_) && !tree_contains(ex.args[5], :_)
+        @debug "Captured comparison"
         obj1, optic1 = parse_obj_optic(:($(ex.args[2])($(ex.args[1]), $(ex.args[3]))))
         obj2, optic2 = parse_obj_optic(:($(ex.args[4])($(ex.args[3]), $(ex.args[5]))))
         @assert obj1 == obj2
         obj = obj1
         return obj, (:($⩓($optic1, $optic2)),)
     elseif @capture(ex, front_[indices__])
+        @debug "Captured front_[indices__]" front indices
         if !tree_contains(front, :_) && any(ind -> tree_contains(ind, :_), indices)
             ind = only(indices)
             @assert tree_contains(ind, :_)
@@ -101,6 +107,7 @@ function parse_obj_optics(ex::Expr)
             end
         end
     elseif @capture(ex, front_.property_)
+        @debug "Captured front_.property_" front property
         property isa Union{Int,Symbol,String} || throw(ArgumentError(
             string("Error while parsing :($ex). Second argument to `getproperty` can only be",
                    "an `Int`, `Symbol` or `String` literal, received `$property` instead.")
@@ -108,6 +115,7 @@ function parse_obj_optics(ex::Expr)
         obj, frontoptic = parse_obj_optics(front)
         optic = :($PropertyLens{$(QuoteNode(property))}())
     elseif @capture(ex, f_(args__))
+        @debug "Captured f_(args__)" f args
         args_contain_under = map(arg -> tree_contains(arg, :_), args)
         f_contains_under = tree_contains(f, :_)
         f_contains_under && any(args_contain_under) && error("Either the function or the arguments can contain an underscore, not both")
@@ -155,6 +163,7 @@ function parse_obj_optics(ex::Expr)
     end
 
     if !@isdefined optic
+        @debug "No full optic captured, going with PropertyFunction"
         if tree_contains(ex, :_)
             # placeholder in ex, but doesn't match any of the known forms
             # try creating a propertyfunction if possible
