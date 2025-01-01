@@ -55,8 +55,15 @@ struct RecursiveOfType{OT,RT,ORD,O}
 end
 Broadcast.broadcastable(o::RecursiveOfType) = Ref(o)
 function RecursiveOfType(out::Type{TO}, optic=Children(); recurse::Type{TR}=Any, order=nothing) where {TO,TR}
+    # seems to work just as well as putting Type{TO} directly into the struct parameter
+    # should only keep the function-interface in the future?..
+    RecursiveOfType(T -> T <: TO, optic; recurse, order)
+    # _check_order(order)
+    # RecursiveOfType{Type{TO},Type{TR},Val{order},typeof(optic)}(out, recurse, Val(order), optic)
+end
+function RecursiveOfType(out::Function, optic=Children(); recurse::Type{TR}=Any, order=nothing) where {TR}
     _check_order(order)
-    RecursiveOfType{Type{TO},Type{TR},Val{order},typeof(optic)}(out, recurse, Val(order), optic)
+    RecursiveOfType{typeof(out),Type{TR},Val{order},typeof(optic)}(out, recurse, Val(order), optic)
 end
 _check_order(order) = order ∈ (nothing, :pre, :post) || error("Unknown recursive order: $order. Must be `nothing`, `:pre`, or `:post`.")
 
@@ -80,17 +87,17 @@ OpticStyle(::Type{<:RecursiveOfType}) = ModifyBased()
 # end
 
 # see https://github.com/FluxML/Functors.jl/pull/61 for the var"#self#" approach and its discussion
-function modify(f, obj, or::RecursiveOfType{Type{OT},Type{RT}}, objs...) where {OT,RT}
+function modify(f, obj, or::RecursiveOfType, objs...)
     recurse(o, bs...) = _walk_modify(var"#self#", f, o, or, bs...)
     _walk_modify(recurse, f, obj, or, objs...)
 end
-_walk_modify(recurse, f, obj, or::RecursiveOfType{Type{OT},Type{RT},ORD}, objs...) where {OT,RT,ORD} =
-    if obj isa OT
-        if ORD === Val{nothing} || !(obj isa RT)
+_walk_modify(recurse, f, obj, or::RecursiveOfType{<:Any,Type{RT},Val{ORD}}, objs...) where {RT,ORD} =
+    if _type_ismatch(typeof(obj), or.outtypes)
+        if ORD === nothing || !(obj isa RT)
             f(obj, objs...)
-        elseif ORD === Val{:pre}
+        elseif ORD === :pre
             modify(recurse, f(obj, objs...), or.optic, objs...)
-        elseif ORD === Val{:post}
+        elseif ORD === :post
             f(modify(recurse, obj, or.optic, objs...), objs...)
         else
             error("Unknown order: $ORD")
@@ -101,17 +108,17 @@ _walk_modify(recurse, f, obj, or::RecursiveOfType{Type{OT},Type{RT},ORD}, objs..
         obj
     end
 
-function getall(obj, or::RecursiveOfType{Type{OT},Type{RT}}) where {OT,RT}
+function getall(obj, or::RecursiveOfType)
     recurse(o) = _walk_getall(var"#self#", o, or)
     _walk_getall(recurse, obj, or)
 end
-_walk_getall(recurse, obj, or::RecursiveOfType{Type{OT},Type{RT},ORD}) where {OT,RT,ORD} =
-    if obj isa OT
-        if ORD === Val{nothing} || !(obj isa RT)
+_walk_getall(recurse, obj, or::RecursiveOfType{<:Any,Type{RT},Val{ORD}}) where {RT,ORD} =
+    if _type_ismatch(typeof(obj), or.outtypes)
+        if ORD === nothing || !(obj isa RT)
             return (obj,)
-        elseif ORD === Val{:pre}
+        elseif ORD === :pre
             return (obj, _getall(recurse, obj, or.optic)...)
-        elseif ORD === Val{:post}
+        elseif ORD === :post
             return (_getall(recurse, obj, or.optic)..., obj)
         else
             error("Unknown order: $ORD")
@@ -124,9 +131,9 @@ _walk_getall(recurse, obj, or::RecursiveOfType{Type{OT},Type{RT},ORD}) where {OT
 _getall(recurse, obj, optic) = @p getall(obj, optic) |> map(recurse) |> _reduce_concat
 
 _setall_T(obj, or::Type{<:RecursiveOfType{<:Any,<:Any,Val{ORD},<:Any}}, istart) where {ORD} = error("Recursive setall not supported with order = $ORD")
-function _setall_T(obj::Type{T}, or::Type{RecursiveOfType{Type{OT},Type{RT},Val{nothing},O}}, istart::Val{I}) where {T,OT,RT,O,I}
+function _setall_T(obj::Type{T}, or::Type{RecursiveOfType{OT,Type{RT},Val{nothing},O}}, istart::Val{I}) where {T,OT,RT,O,I}
     curcnt = 0
-    full_expr = if T <: OT
+    full_expr = if _type_ismatch(T, _outtype_selector(or))
         curcnt += 1
         :(vals[$(I + curcnt - 1)])
     elseif T <: RT
@@ -169,10 +176,17 @@ end
 
 tree_concatoptic(::Type{T}, o::Children) where {T} = tree_concatoptic(T, _chooseoptic_bytype(T, o))
 tree_concatoptic(::Type{T}, or::RecursiveOfType{<:Any,<:Any,Val{nothing}}) where {T} = 
-    if T <: or.outtypes
+    if _type_ismatch(T, or.outtypes)
         identity
     elseif T <: or.rectypes
         tree_concatoptic(T, or ∘ or.optic)
     else
         concat()
     end
+
+
+_outtype_selector(::Type{<:RecursiveOfType{Type{OT}}}) where {OT} = OT
+_outtype_selector(::Type{<:RecursiveOfType{F}}) where {F<:Function} = (@assert Base.issingletontype(F); F.instance)
+
+_type_ismatch(::Type{T}, ::Type{S}) where {T,S} = T <: S
+_type_ismatch(::Type{T}, f::Function) where {T} = f(T)
