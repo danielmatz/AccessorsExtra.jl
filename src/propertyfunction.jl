@@ -27,8 +27,8 @@ const PROPFUNCTYPES = Union{
     PROPFUNCTYPES_ONLYEXTRA,
 }
 
-Base.map(f::PROPFUNCTYPES, x) = map(rawfunc(f), extract_properties_recursive(x, propspec(f)))
-Base.map(f::PROPFUNCTYPES, x::AbstractArray) = map(rawfunc(f), extract_properties_recursive(x, propspec(f)))  # disambiguation
+# Base.map(f::PROPFUNCTYPES, x) = map(rawfunc(f), extract_properties_recursive(x, propspec(f)))  # causes too many ambiguities...
+Base.map(f::PROPFUNCTYPES, x::AbstractArray) = map(rawfunc(f), extract_properties_recursive(x, propspec(f)))
 
 # almost same as in Base, but:
 # - with PROPFUNCTYPES instead of Function restriction
