@@ -8,16 +8,37 @@
 @inline modify(f, A::Tuple, ::Properties, B::Tuple) = error("modify not supported for different lengths: $(length(A)) vs $(length(B))")
 @inline modify(f, A, ::Properties, Bs...) = setproperties(A, modify(f, getproperties(A), Properties(), getproperties.(Bs)...))
 
+
+export shared
+struct shared{O}
+    optic::O
+end
+
+
 # when transferring these to Accessors, can remove separate "B" argument
 modify(f, A, o::ComposedFunction, B, Bs...) =
-    modify(A, o.inner, B, Bs...) do a, b, bs...
-        modify(f, a, o.outer, b, bs...)
+    if any(c -> c isa shared, decompose(o))
+        modify_shared(f, A, o, B, Bs...)
+    else
+        modify(A, o.inner, B, Bs...) do a, bs...
+            modify(f, a, o.outer, bs...)
+        end
     end
 
 @inline modify(f, A, o, B, Bs...) =
     modify(A, o) do a
         f(a, o(B), map(o, Bs)...)
     end
+
+@inline modify_shared(f, A, o::ComposedFunction, B, Bs...) =
+    modify_shared(A, o.inner, B, Bs...) do a, bs...
+        modify_shared(f, a, o.outer, bs...)
+    end
+@inline modify_shared(f, A, o, Bs...) =
+    modify(A, o) do a
+        f(a, Bs...)
+    end
+@inline modify_shared(f, A, o::shared, Bs...) = modify(f, A, o.optic, Bs...)
 
 # functionality is useful: "take elements according to their indices, not iteration order"
 # but it shouldn't be keyed(∗) because it means different things for a single argument

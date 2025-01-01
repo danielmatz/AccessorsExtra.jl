@@ -69,6 +69,8 @@ end
     @test modify(+, (1, 2), (@o _[∗] + 1), (3, 4), (5, 6)) === (11, 14)
 
     # @test modify(tuple, (a=(1, 2), b=3), (@maybe _.a[∗]), ()) === (a=((1,nothing), (2,nothing)), b=7)
+
+    @test modify(+, ((a=1,), (a=2,)), (@o _ |> shared(∗) |> _.a), (3, 4)) === ((a=4,), (a=6,))
     end
 end
 
