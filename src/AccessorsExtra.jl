@@ -76,7 +76,7 @@ barebones_string(optic::Base.Splat) = sprint(Accessors.show_optic, optic; contex
 barebones_string(optic::Union{Base.Fix1,Base.Fix2}) = sprint(Accessors.show_optic, optic; context=:compact => true)
 barebones_string(optic::typeof(identity)) = "_"
 barebones_string(optic) = @p let
-    sprint(show, optic; context=:compact => true)
+    sprint(Accessors.show_optic, optic; context=:compact => true)
     replace(__, "_." => "", "_[" => "[")
 end
 
