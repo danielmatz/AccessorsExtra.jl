@@ -45,6 +45,7 @@ end
     @test modify(+, (1, 2), ∗ₚ, (3, 4)) === (4, 6)
     @test modify(+, (x=1, y=2), ∗ₚ, (x=3, y=4, z=5)) === (x=4, y=6)
     @test modify(+, (x=1, y=2), ∗ₚ, (y=4, x=3, z=5)) === (x=4, y=6)
+    @test modify(+, (x=1, y=2), ∗ₚ, (y=4, x=3, z=5), (x=10, y=20)) === (x=14, y=26)
     # @test modify(+, (x=1, y=2), ∗ₚ, Dict(:y=>4, :x=>3, :z=>5)) === (x=4, y=6)
     # @test modify(+, (x=1, y=2), ∗ₚ, dictionary([:y=>4, :x=>3])) === (x=4, y=6)
     @test_throws Exception modify(+, (1, 2), ∗ₚ, (a=3, b=4))
