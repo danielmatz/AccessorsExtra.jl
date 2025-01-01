@@ -72,6 +72,8 @@ function __init__()
 end
 
 
+barebones_string(optic::Base.Splat) = sprint(Accessors.show_optic, optic; context=:compact => true)
+barebones_string(optic::Union{Base.Fix1,Base.Fix2}) = sprint(Accessors.show_optic, optic; context=:compact => true)
 barebones_string(optic) = @p let
     sprint(show, optic; context=:compact => true)
     replace(__, "_." => "", "_[" => "[")

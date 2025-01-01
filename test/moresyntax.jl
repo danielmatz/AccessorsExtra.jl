@@ -98,12 +98,14 @@ end
 @testitem "barebones string" begin
     using AccessorsExtra: barebones_string
 
-    @test barebones_string(@o(_.a[∗].b[∗ₚ].c[2])) == "a[∗].b[∗ₚ].c[2]"
-    @test barebones_string(@o(_[∗].b)) == "[∗].b"
-    @test barebones_string(@o(_[∗ₚ])) == "[∗ₚ]"
-    @test_broken barebones_string(@o(atan(_...))) == "atan(_...)"
-    @test barebones_string(@o(atan(_.a...))) == "atan(a...)"
-    @test barebones_string(@o(tuple(_, 1, 2))) == "tuple(_, 1, 2)"
-    @test barebones_string(@o(sort(_, by=abs))) == "sort(_, by=abs)"
-    @test barebones_string(@o(sort(_, 1, by=abs))) == "sort(_, 1, by=abs)"
+    @test barebones_string(@o _.a[∗].b[∗ₚ].c[2]) == "a[∗].b[∗ₚ].c[2]"
+    @test barebones_string(@o _[∗].b) == "[∗].b"
+    @test barebones_string(@o _[∗ₚ]) == "[∗ₚ]"
+    @test barebones_string(@o atan(_...)) == "atan(_...)"
+    @test barebones_string(@o _ + 1) == "+(_, 1)"
+    @test barebones_string(@o atan(_.a...)) == "atan(a...)"
+    @test barebones_string(@o tuple(_, 1, 2)) == "tuple(_, 1, 2)"
+    @test barebones_string(@o _ + 1 + 2) == "+(_, 1, 2)"
+    @test barebones_string(@o sort(_, by=abs)) == "sort(_, by=abs)"
+    @test barebones_string(@o sort(_, 1, by=abs)) == "sort(_, 1, by=abs)"
 end
