@@ -31,6 +31,12 @@ julia> o(obj)
 3
 julia> o((a=1, c=3))
 nothing
+julia> @oget obj.a.b[1]
+2
+julia> @oget obj.c.d
+nothing
+julia> @oget obj.c.d obj.a.b[1]
+2
 ```
 
 See the [Pluto notebook](https://aplavin.github.io/AccessorsExtra.jl/examples/notebook.html) for more details and usage examples.

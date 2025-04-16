@@ -192,6 +192,28 @@ hasoptic(obj, ::Returns) = true
 
 
 # convenience macros
+"""
+    @oget exprs...
+
+Return the value of the first expression in `exprs` which does not refer to any
+values that are not present. Return `nothing` if all `exprs` refer to values
+that are not present.
+
+## Examples
+
+```julia
+julia> obj = (a = 1, b = [2, 3])
+
+julia> @oget obj.a
+1
+
+julia> @oget obj.c.d
+# nothing
+
+julia> @oget obj.c.d obj.a
+1
+```
+"""
 macro oget(refs...)
     foldr(refs, init=nothing) do ref, curexpr
         obj, optic = parse_obj_optic(ref)
@@ -212,6 +234,12 @@ macro osomething(args...)
     end...))) |> esc
 end
 
+"""
+    @maybe(optic; [default=nothing])
+
+Create an optional optic that references a value that may or may not be present
+in the object.
+"""
 macro maybe(o, default=nothing)
     return :($maybe(($Accessors.@o $o); default=$default)) |> esc
 end
